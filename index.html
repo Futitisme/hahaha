@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graph Builder</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        canvas {
+            border: 1px solid black;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Graph Builder</h1>
+    <form id="input-form">
+        <label>
+            Function (e.g., Math.sin(x)):
+            <input type="text" id="function" required>
+        </label><br>
+        <label>
+            Start:
+            <input type="number" id="start" required>
+        </label><br>
+        <label>
+            End:
+            <input type="number" id="end" required>
+        </label><br>
+        <label>
+            Step:
+            <input type="number" id="step" step="0.01" required>
+        </label><br><br>
+        <button type="submit">Start</button>
+    </form>
+    <button id="pause-button">Pause</button>
+    <button id="unpause-button">Unpause</button>
+    <canvas id="graph" width="800" height="400"></canvas>
+
+    <script>
+        const form = document.getElementById('input-form');
+        const pauseButton = document.getElementById('pause-button');
+        const unpauseButton = document.getElementById('unpause-button');
+        const canvas = document.getElementById('graph');
+        const ctx = canvas.getContext('2d');
+
+        let interval;
+
+        function drawPoints(points) {
+            points.forEach(([x, y]) => {
+                const canvasX = (x - start) / (end - start) * canvas.width;
+                const canvasY = canvas.height - (y - minY) / (maxY - minY) * canvas.height;
+                ctx.fillRect(canvasX, canvasY, 2, 2);
+            });
+        }
+
+        let start, end, minY = -1, maxY = 1;
+        
+        async function fetchPoints() {
+    const response = await fetch('http://iunderstanditnow.pythonanywhere.com/fetch');
+    const data = await response.json();
+
+    if (data.message === 'Paused') {
+        console.log('Paused');
+        return;
+    }
+
+    drawPoints(data.points);
+
+    if (data.completed) {
+        clearInterval(interval);
+        console.log('Graph complete.');
+    }
+}
+
+    form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const functionInput = document.getElementById('function').value;
+            start = parseFloat(document.getElementById('start').value);
+            end = parseFloat(document.getElementById('end').value);
+            const step = parseFloat(document.getElementById('step').value);
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            await fetch('http://iunderstanditnow.pythonanywhere.com/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ function: functionInput, start, end, step })
+            });
+
+            interval = setInterval(fetchPoints, 500);
+        });
+
+        pauseButton.addEventListener('click', async () => {
+            await fetch('http://iunderstanditnow.pythonanywhere.com/pause', { method: 'POST' });
+        });
+
+        unpauseButton.addEventListener('click', async () => {
+            await fetch('http://iunderstanditnow.pythonanywhere.com/unpause', { method: 'POST' });
+        });
+
+    </script>
+</body>
+</html>
