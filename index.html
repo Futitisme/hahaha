@@ -96,11 +96,11 @@
         });
 
         pauseButton.addEventListener('click', async () => {
-            await fetch('http://iunderstanditnow.pythonanywhere.com/pause', { method: 'POST' });
+            await fetch('http://iunderstanditnow.pythonanywhere.com/pause', { method: 'POST', mode: 'cors' });
         });
 
         unpauseButton.addEventListener('click', async () => {
-            await fetch('http://iunderstanditnow.pythonanywhere.com/unpause', { method: 'POST' });
+            await fetch('http://iunderstanditnow.pythonanywhere.com/unpause', { method: 'POST', mode: 'cors' });
         });
 
     </script>
