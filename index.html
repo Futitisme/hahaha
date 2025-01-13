@@ -3,15 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Graph Builder</title>
+    <title>Graph Builder with Plotly</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
-        }
-        canvas {
-            border: 1px solid black;
-            margin-top: 20px;
         }
     </style>
 </head>
@@ -38,53 +35,59 @@
     </form>
     <button id="pause-button">Pause</button>
     <button id="unpause-button">Unpause</button>
-    <canvas id="graph" width="800" height="400"></canvas>
+    <div id="graph"></div>
 
     <script>
         const form = document.getElementById('input-form');
         const pauseButton = document.getElementById('pause-button');
         const unpauseButton = document.getElementById('unpause-button');
-        const canvas = document.getElementById('graph');
-        const ctx = canvas.getContext('2d');
+        const graphDiv = document.getElementById('graph');
 
         let interval;
+        let points = [];
+        let isPaused = false;
 
-        function drawPoints(points) {
-            points.forEach(([x, y]) => {
-                const canvasX = (x - start) / (end - start) * canvas.width;
-                const canvasY = canvas.height - (y - minY) / (maxY - minY) * canvas.height;
-                ctx.fillRect(canvasX, canvasY, 2, 2);
-            });
+        async function fetchPoints() {
+            const response = await fetch('https://iunderstanditnow.pythonanywhere.com/fetch');
+            const data = await response.json();
+
+            if (data.message === 'Paused') {
+                console.log('Paused');
+                return;
+            }
+
+            points = [...points, ...data.points];
+
+            const trace = {
+                x: points.map(point => point[0]),
+                y: points.map(point => point[1]),
+                mode: 'lines+markers',
+                marker: { color: 'blue' }
+            };
+
+            const layout = {
+                title: 'Graph Visualization',
+                xaxis: { title: 'X' },
+                yaxis: { title: 'Y' }
+            };
+
+            Plotly.newPlot(graphDiv, [trace], layout);
+
+            if (data.completed) {
+                clearInterval(interval);
+                console.log('Graph complete.');
+            }
         }
 
-        let start, end, minY = -1, maxY = 1;
-        
-        async function fetchPoints() {
-    const response = await fetch('https://iunderstanditnow.pythonanywhere.com/fetch');
-    const data = await response.json();
-
-    if (data.message === 'Paused') {
-        console.log('Paused');
-        return;
-    }
-
-    drawPoints(data.points);
-
-    if (data.completed) {
-        clearInterval(interval);
-        console.log('Graph complete.');
-    }
-}
-
-    form.addEventListener('submit', async (event) => {
+        form.addEventListener('submit', async (event) => {
             event.preventDefault();
 
             const functionInput = document.getElementById('function').value;
-            start = parseFloat(document.getElementById('start').value);
-            end = parseFloat(document.getElementById('end').value);
+            const start = parseFloat(document.getElementById('start').value);
+            const end = parseFloat(document.getElementById('end').value);
             const step = parseFloat(document.getElementById('step').value);
 
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            points = []; // Reset points for a new graph
 
             await fetch('https://iunderstanditnow.pythonanywhere.com/start', {
                 method: 'POST',
@@ -96,13 +99,14 @@
         });
 
         pauseButton.addEventListener('click', async () => {
+            isPaused = true;
             await fetch('https://iunderstanditnow.pythonanywhere.com/pause', { method: 'POST' });
         });
 
         unpauseButton.addEventListener('click', async () => {
+            isPaused = false;
             await fetch('https://iunderstanditnow.pythonanywhere.com/unpause', { method: 'POST' });
         });
-
     </script>
 </body>
 </html>
