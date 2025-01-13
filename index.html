@@ -60,7 +60,7 @@
         let start, end, minY = -1, maxY = 1;
         
         async function fetchPoints() {
-    const response = await fetch('http://10.255.0.1:7777/fetch');
+    const response = await fetch('http://https://iunderstanditnow.pythonanywhere.com/fetch');
     const data = await response.json();
 
     if (data.message === 'Paused') {
@@ -86,7 +86,7 @@
 
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            await fetch('http://10.255.0.1:7777/start', {
+            await fetch('http://https://iunderstanditnow.pythonanywhere.com/start', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ function: functionInput, start, end, step })
@@ -96,11 +96,11 @@
         });
 
         pauseButton.addEventListener('click', async () => {
-            await fetch('http://10.255.0.1:7777/pause', { method: 'POST' });
+            await fetch('http://https://iunderstanditnow.pythonanywhere.com/pause', { method: 'POST' });
         });
 
         unpauseButton.addEventListener('click', async () => {
-            await fetch('http://10.255.0.1:7777/unpause', { method: 'POST' });
+            await fetch('http://https://iunderstanditnow.pythonanywhere.com/unpause', { method: 'POST' });
         });
 
     </script>
